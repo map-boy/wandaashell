@@ -1,0 +1,8 @@
+﻿wandaashell.exe
+*.exe
+*.obj
+*.o
+wandaa_stdin.tmp
+wandaa_stdout.tmp
+test.txt
+test2.txt
