@@ -13,15 +13,21 @@ namespace fs = std::filesystem;
 
 void runShell() {
     auto builtins = makeBuiltins();
+    markShellStart();
 
-    std::cout << "wandaashell v0.3\n";
+    std::cout << "wandaashell v0.4.0\n";
     std::string line;
     while (true) {
         std::cout << "wandaa " << fs::current_path().string() << " > ";
         if (!std::getline(std::cin, line)) break;
         if (line.empty()) continue;
 
+        pushHistory(line);
+
         auto tokens = tokenize(line);
+        if (tokens.empty()) continue;
+
+        resolveAlias(tokens);
         if (tokens.empty()) continue;
         if (tokens[0] == "exit" || tokens[0] == "quit") break;
 
