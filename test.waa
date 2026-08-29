@@ -1,0 +1,4 @@
+shell("pwd")
+shell("ls *.txt")
+shell("waa version")
+print("done")

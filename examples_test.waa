@@ -1,0 +1,15 @@
+x = 5
+y = 10
+print("sum is:")
+print(x + y)
+
+if x < y {
+    print("x is smaller")
+} else {
+x    print("y is smaller or equal")
+}
+
+loop 3 {
+    print("looping")
+}
+
