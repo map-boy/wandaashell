@@ -1,4 +1,4 @@
-﻿#include "pipeline.h"
+﻿#include "core/pipeline.h"
 #include <iostream>
 
 std::vector<Stage> parsePipeline(const std::vector<std::string>& tokens) {

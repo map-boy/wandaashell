@@ -1,4 +1,4 @@
-#include "script_parser.h"
+#include "core/script_parser.h"
 #include <cctype>
 #include <stdexcept>
 

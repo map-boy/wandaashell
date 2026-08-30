@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-#include "ast.h"
+#include "core/ast.h"
 
 // Parses raw .waa source text into a Program AST node.
 // Grammar covered by this first pass:

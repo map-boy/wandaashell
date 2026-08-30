@@ -4,7 +4,7 @@
 #include <variant>
 #include <memory>
 #include <functional>
-#include "ast.h"
+#include "core/ast.h"
 
 // A runtime value in .waa: number, string, or nothing (void)
 struct Value {

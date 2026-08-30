@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
-#include "types.h"
+#include "core/types.h"
 
 std::unordered_map<std::string, CommandFn> makeBuiltins();
 void pushHistory(const std::string& line);

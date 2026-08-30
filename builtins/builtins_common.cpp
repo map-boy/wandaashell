@@ -1,5 +1,6 @@
-#include "builtins.h"
-#include "external.h"
+#include "builtins/builtins.h"
+#include "builtins/builtins_internal.h"
+#include "platform/platform.h"
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -9,10 +10,9 @@
 #include <chrono>
 #include <vector>
 #include <iomanip>
-#include "script_parser.h"
-#include <windows.h>
-#include "interpreter.h"
-#include "audio.h"
+#include <utility>
+#include "core/script_parser.h"
+#include "core/interpreter.h"
 
 namespace fs = std::filesystem;
 
@@ -132,7 +132,7 @@ static int cmd_rmdir(const std::vector<std::string>& args, std::istream&, std::o
 static int cmd_rm(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
     if (args.size() < 2) { std::cerr << "rm: missing target\n"; return 1; }
     if (!fs::exists(args[1])) {
-        playVoiceAsync();
+        platform::playVoiceAsync("wandaa-voice.mp3");
         out << "rm: nothing left to delete here.\n";
         return 1;
     }
@@ -176,13 +176,12 @@ static int cmd_cat(const std::vector<std::string>& args, std::istream&, std::ost
 }
 
 static int cmd_clear(const std::vector<std::string>&, std::istream&, std::ostream&) {
-    std::system("cls");
+    platform::clearScreen();
     return 0;
 }
 
 static int cmd_whoami(const std::vector<std::string>&, std::istream&, std::ostream& out) {
-    const char* user = std::getenv("USERNAME");
-    out << (user ? user : "unknown") << "\n";
+    out << platform::currentUserName() << "\n";
     return 0;
 }
 
@@ -196,8 +195,7 @@ static int cmd_date(const std::vector<std::string>&, std::istream&, std::ostream
 
 static int cmd_open(const std::vector<std::string>& args, std::istream&, std::ostream&) {
     fs::path target = args.size() > 1 ? fs::path(args[1]) : fs::current_path();
-    std::string cmdStr = "explorer \"" + target.string() + "\"";
-    std::system(cmdStr.c_str());
+    platform::openPath(target.string());
     return 0;
 }
 
@@ -262,50 +260,6 @@ static int cmd_alias(const std::vector<std::string>& args, std::istream&, std::o
     for (size_t i = 2; i < args.size(); ++i) cmdStr += args[i] + (i + 1 < args.size() ? " " : "");
     g_aliases[args[1]] = cmdStr;
     return 0;
-}
-
-static int cmd_which(const std::vector<std::string>& args, std::istream& in, std::ostream& out) {
-    if (args.size() < 2) { std::cerr << "which: usage: which <command>\n"; return 1; }
-    static const std::vector<std::string> builtinNames = {
-        "cd","pwd","echo","ls","dir","mkdir","md","rmdir","rd","rm","del","cp","copy",
-        "mv","move","ren","touch","cat","type","clear","cls","whoami","date","open",
-        "waa","help","find","grep","set","env","history","alias","which","ps","kill",
-        "curl","wget","winget"
-    };
-    for (auto& n : builtinNames) {
-        if (n == args[1]) { out << args[1] << ": shell built-in\n"; return 0; }
-    }
-    run_external({"where", args[1]}, in, out, false, 0, "");
-    return 0;
-}
-
-static int cmd_ps(const std::vector<std::string>&, std::istream& in, std::ostream& out) {
-    return run_external({"tasklist"}, in, out, false, 0, "");
-}
-
-static int cmd_kill(const std::vector<std::string>& args, std::istream& in, std::ostream& out) {
-    if (args.size() < 2) { std::cerr << "kill: usage: kill <pid>\n"; return 1; }
-    return run_external({"taskkill", "/PID", args[1], "/F"}, in, out, false, 0, "");
-}
-
-static int cmd_curl(const std::vector<std::string>& args, std::istream& in, std::ostream& out) {
-    if (args.size() < 2) { std::cerr << "curl: usage: curl <url> [-o file] [options...]\n"; return 1; }
-    return run_external(args, in, out, false, 0, "");
-}
-
-static int cmd_wget(const std::vector<std::string>& args, std::istream& in, std::ostream& out) {
-    if (args.size() < 2) { std::cerr << "wget: usage: wget <url> [-o file]\n"; return 1; }
-    std::vector<std::string> curlArgs = {"curl", "-L"};
-    for (size_t i = 1; i < args.size(); ++i) curlArgs.push_back(args[i]);
-    return run_external(curlArgs, in, out, false, 0, "");
-}
-
-static int cmd_winget(const std::vector<std::string>& args, std::istream& in, std::ostream& out) {
-    if (args.size() < 2) {
-        std::cerr << "winget: usage: winget <search|install|list|upgrade|uninstall> [args...]\n";
-        return 1;
-    }
-    return run_external(args, in, out, false, 0, "");
 }
 
 static int cmd_waa(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
@@ -450,11 +404,6 @@ static int cmd_decrypt(const std::vector<std::string>& args, std::istream&, std:
     return 0;
 }
 
-static int cmd_disasm(const std::vector<std::string>& args, std::istream& in, std::ostream& out) {
-    if (args.size() < 2) { std::cerr << "disasm: usage: disasm <file.exe|.dll|.o>\n"; return 1; }
-    return run_external({"objdump", "-d", args[1]}, in, out, false, 0, "");
-}
-
 static int cmd_insertafter(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
     if (args.size() < 4) { std::cerr << "insertafter: usage: insertafter <file> <pattern> <text...>\n"; return 1; }
     std::ifstream ifs(args[1]);
@@ -498,7 +447,7 @@ static int cmd_grepn(const std::vector<std::string>& args, std::istream&, std::o
 }
 static int cmd_fille(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
     std::ifstream passFile("admin_pass.txt");
-    if (!passFile) { std::cerr << "fille: admin_pass.txt not found (create it next to wandaashell.exe)\n"; return 1; }
+    if (!passFile) { std::cerr << "fille: admin_pass.txt not found (create it next to the wandaashell executable)\n"; return 1; }
     std::string expected;
     std::getline(passFile, expected);
     while (!expected.empty() && (expected.back() == '\r' || expected.back() == '\n')) expected.pop_back();
@@ -513,36 +462,36 @@ static int cmd_fille(const std::vector<std::string>& args, std::istream&, std::o
         return 1;
     }
 
-    std::string wtParams = "-p \"wandaashell\"";
-
-    SHELLEXECUTEINFOA sei = { sizeof(sei) };
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    sei.lpVerb = "runas";
-    sei.lpFile = "wt.exe";
-    sei.lpParameters = wtParams.c_str();
-    sei.lpDirectory = fs::current_path().string().c_str();
-    sei.nShow = SW_SHOWNORMAL;
-
-    if (!ShellExecuteExA(&sei)) {
+    std::error_code ec;
+    const std::string cwd = fs::current_path(ec).string();
+    if (!platform::requestElevation(platform::getExecutablePath(), "", cwd)) {
         std::cerr << "fille: elevation cancelled or failed\n";
         return 1;
     }
-    if (sei.hProcess) CloseHandle(sei.hProcess);
-    out << "fille: opened a new elevated wandaashell window (wandaashell profile)\n";
+    out << "fille: opened a new elevated wandaashell window (via "
+        << platform::elevationMechanism() << ")\n";
     return 0;
 }
 
 static int cmd_help(const std::vector<std::string>&, std::istream&, std::ostream& out) {
     out << "Built-in commands:\n"
         << "  cd, pwd, echo, ls, mkdir, rmdir, rm, cp, mv, touch, cat,\n"
-        << "  clear, whoami, date, open, find, grep, set, env, history,\n"
-        << "  alias, which, ps, kill, curl, wget, winget, waa, help, exit, quit\n"
-        << "Redirection: >, >>, <    Pipes: cmd1 | cmd2\n";
+        << "  clear, whoami, date, open, find, grep, grepn, insertafter, set, env,\n"
+        << "  history, alias, which, ps, kill, curl, wget, pkg, waa, help, exit, quit\n"
+        << "  hexcat, b64encode, b64decode, encrypt, decrypt, disasm, run, fille\n"
+        << "Redirection: >, >>, <    Pipes: cmd1 | cmd2    Chaining: cmd1 ; cmd2\n"
+        << "Package manager on this system: "
+        << (platform::packageManagerName().empty() ? std::string("none detected")
+                                                   : platform::packageManagerName())
+        << "\n";
     return 0;
 }
 
-std::unordered_map<std::string, CommandFn> makeBuiltins() {
-    return {
+// Single source of truth for the command table. `which` reports anything in
+// here as a built-in, so the list can never drift out of sync the way a
+// hand-maintained copy did.
+static const std::vector<std::pair<std::string, CommandFn>>& builtinTable() {
+    static const std::vector<std::pair<std::string, CommandFn>> table = {
         {"cd", cmd_cd}, {"pwd", cmd_pwd}, {"echo", cmd_echo},
         {"ls", cmd_ls}, {"dir", cmd_ls},
         {"mkdir", cmd_mkdir}, {"md", cmd_mkdir},
@@ -569,7 +518,7 @@ std::unordered_map<std::string, CommandFn> makeBuiltins() {
         {"kill", cmd_kill},
         {"curl", cmd_curl},
         {"wget", cmd_wget},
-        {"winget", cmd_winget},
+        {"pkg", cmd_pkg}, {"winget", cmd_pkg},
         {"waa", cmd_waa},
         {"help", cmd_help},
         {"fille", cmd_fille},
@@ -577,4 +526,20 @@ std::unordered_map<std::string, CommandFn> makeBuiltins() {
         {"encrypt", cmd_encrypt}, {"decrypt", cmd_decrypt}, {"disasm", cmd_disasm},
         {"run", cmd_run},
     };
+    return table;
+}
+
+const std::vector<std::string>& builtinNames() {
+    static const std::vector<std::string> names = [] {
+        std::vector<std::string> n;
+        for (const auto& e : builtinTable()) n.push_back(e.first);
+        return n;
+    }();
+    return names;
+}
+
+std::unordered_map<std::string, CommandFn> makeBuiltins() {
+    std::unordered_map<std::string, CommandFn> m;
+    for (const auto& e : builtinTable()) m.emplace(e.first, e.second);
+    return m;
 }
