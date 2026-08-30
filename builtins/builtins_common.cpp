@@ -279,7 +279,7 @@ static int cmd_waa(const std::vector<std::string>& args, std::istream&, std::ost
     return 0;
 }
 
-static int cmd_run(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
+static int cmd_run(const std::vector<std::string>& args, std::istream&, std::ostream&) {
     if (args.size() < 2) { std::cerr << "run: usage: run <file.waa>\n"; return 1; }
     std::ifstream ifs(args[1], std::ios::binary);
     if (!ifs) { std::cerr << "run: cannot open " << args[1] << "\n"; return 1; }
@@ -446,7 +446,7 @@ static int cmd_grepn(const std::vector<std::string>& args, std::istream&, std::o
     }
     return 0;
 }
-static int cmd_fille(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
+static int cmd_fille(const std::vector<std::string>&, std::istream&, std::ostream& out) {
     std::ifstream passFile("admin_pass.txt");
     if (!passFile) { std::cerr << "fille: admin_pass.txt not found (create it next to the wandaashell executable)\n"; return 1; }
     std::string expected;
@@ -475,16 +475,24 @@ static int cmd_fille(const std::vector<std::string>& args, std::istream&, std::o
 }
 
 static int cmd_help(const std::vector<std::string>&, std::istream&, std::ostream& out) {
-    out << "Built-in commands:\n"
-        << "  cd, pwd, echo, ls, mkdir, rmdir, rm, cp, mv, touch, cat,\n"
-        << "  clear, whoami, date, open, find, grep, grepn, insertafter, set, env,\n"
-        << "  history, alias, which, ps, kill, curl, wget, pkg, waa, help, exit, quit\n"
-        << "  hexcat, b64encode, b64decode, encrypt, decrypt, disasm, run, fille\n"
-        << "Redirection: >, >>, <    Pipes: cmd1 | cmd2    Chaining: cmd1 ; cmd2\n"
-        << "Package manager on this system: "
-        << (platform::packageManagerName().empty() ? std::string("none detected")
-                                                   : platform::packageManagerName())
-        << "\n";
+    out << "Built-in commands:\n";
+    const auto& names = builtinNames();
+    for (size_t i = 0; i < names.size(); ++i) {
+        if (i % 8 == 0) out << "  ";
+        out << names[i] << ",";
+        out << ((i % 8 == 7 || i + 1 == names.size()) ? "\n" : " ");
+    }
+    out << "  exit, quit\n"
+        << "Redirection: >, >>, <    Pipes: cmd1 | cmd2    Chaining: cmd1 ; cmd2\n";
+    if (platform::supportsExternalProcesses()) {
+        out << "Package manager on this system: "
+            << (platform::packageManagerName().empty() ? std::string("none detected")
+                                                       : platform::packageManagerName())
+            << "\n";
+    } else {
+        out << "This build runs built-in commands only: the platform sandbox does not\n"
+               "allow launching external programs.\n";
+    }
     return 0;
 }
 
@@ -492,41 +500,57 @@ static int cmd_help(const std::vector<std::string>&, std::istream&, std::ostream
 // here as a built-in, so the list can never drift out of sync the way a
 // hand-maintained copy did.
 static const std::vector<std::pair<std::string, CommandFn>>& builtinTable() {
-    static const std::vector<std::pair<std::string, CommandFn>> table = {
-        {"cd", cmd_cd}, {"pwd", cmd_pwd}, {"echo", cmd_echo},
-        {"ls", cmd_ls}, {"dir", cmd_ls},
-        {"mkdir", cmd_mkdir}, {"md", cmd_mkdir},
-        {"rmdir", cmd_rmdir}, {"rd", cmd_rmdir},
-        {"rm", cmd_rm}, {"del", cmd_rm},
-        {"cp", cmd_cp}, {"copy", cmd_cp},
-        {"mv", cmd_mv}, {"move", cmd_mv}, {"ren", cmd_mv},
-        {"touch", cmd_touch},
-        {"cat", cmd_cat}, {"type", cmd_cat},
-        {"clear", cmd_clear}, {"cls", cmd_clear},
-        {"whoami", cmd_whoami},
-        {"date", cmd_date},
-        {"open", cmd_open},
-        {"find", cmd_find},
-        {"grep", cmd_grep},
-        {"grepn", cmd_grepn},
-        {"insertafter", cmd_insertafter},
-        {"set", cmd_set},
-        {"env", cmd_env},
-        {"history", cmd_history},
-        {"alias", cmd_alias},
-        {"which", cmd_which}, {"where", cmd_which},
-        {"ps", cmd_ps},
-        {"kill", cmd_kill},
-        {"curl", cmd_curl},
-        {"wget", cmd_wget},
-        {"pkg", cmd_pkg}, {"winget", cmd_pkg},
-        {"waa", cmd_waa},
-        {"help", cmd_help},
-        {"fille", cmd_fille},
-        {"hexcat", cmd_hexcat}, {"b64encode", cmd_b64encode}, {"b64decode", cmd_b64decode},
-        {"encrypt", cmd_encrypt}, {"decrypt", cmd_decrypt}, {"disasm", cmd_disasm},
-        {"run", cmd_run},
-    };
+    static const std::vector<std::pair<std::string, CommandFn>> table = [] {
+        std::vector<std::pair<std::string, CommandFn>> t = {
+            {"cd", cmd_cd}, {"pwd", cmd_pwd}, {"echo", cmd_echo},
+            {"ls", cmd_ls}, {"dir", cmd_ls},
+            {"mkdir", cmd_mkdir}, {"md", cmd_mkdir},
+            {"rmdir", cmd_rmdir}, {"rd", cmd_rmdir},
+            {"rm", cmd_rm}, {"del", cmd_rm},
+            {"cp", cmd_cp}, {"copy", cmd_cp},
+            {"mv", cmd_mv}, {"move", cmd_mv}, {"ren", cmd_mv},
+            {"touch", cmd_touch},
+            {"cat", cmd_cat}, {"type", cmd_cat},
+            {"clear", cmd_clear}, {"cls", cmd_clear},
+            {"whoami", cmd_whoami},
+            {"date", cmd_date},
+            {"open", cmd_open},
+            {"find", cmd_find},
+            {"grep", cmd_grep},
+            {"grepn", cmd_grepn},
+            {"insertafter", cmd_insertafter},
+            {"set", cmd_set},
+            {"env", cmd_env},
+            {"history", cmd_history},
+            {"alias", cmd_alias},
+            {"which", cmd_which}, {"where", cmd_which},
+            {"waa", cmd_waa},
+            {"help", cmd_help},
+            {"hexcat", cmd_hexcat}, {"b64encode", cmd_b64encode}, {"b64decode", cmd_b64decode},
+            {"encrypt", cmd_encrypt}, {"decrypt", cmd_decrypt},
+            {"run", cmd_run},
+        };
+
+        // Commands that only mean something when this build can launch other
+        // programs. On mobile they are absent from the table entirely, so
+        // `help` never lists them and `which` never claims they exist -
+        // rather than being registered as no-ops that pretend to work.
+        if (platform::supportsExternalProcesses()) {
+            t.push_back({"ps", cmd_ps});
+            t.push_back({"kill", cmd_kill});
+            t.push_back({"curl", cmd_curl});
+            t.push_back({"wget", cmd_wget});
+            t.push_back({"pkg", cmd_pkg});
+            t.push_back({"winget", cmd_pkg});
+            t.push_back({"disasm", cmd_disasm});
+        }
+
+        // There is no privilege to escalate to inside an app sandbox.
+        if (platform::supportsElevation()) {
+            t.push_back({"fille", cmd_fille});
+        }
+        return t;
+    }();
     return table;
 }
 

@@ -22,6 +22,22 @@
 namespace platform {
 
 // ---------------------------------------------------------------------------
+// Capabilities
+//
+// Not every platform can do every job, and the honest answer is to remove the
+// affected commands from the shell's command table rather than register them
+// as no-ops that lie to the user. The desktop backends return true for both;
+// the mobile backends return false, because an app sandbox genuinely cannot
+// spawn arbitrary binaries or escalate privilege.
+// ---------------------------------------------------------------------------
+
+// Can this build launch external programs? False on iOS and Android.
+bool supportsExternalProcesses();
+
+// Does a privilege-escalation concept exist here at all? False on mobile.
+bool supportsElevation();
+
+// ---------------------------------------------------------------------------
 // Identity / privilege
 // ---------------------------------------------------------------------------
 

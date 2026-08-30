@@ -34,6 +34,11 @@ namespace fs = std::filesystem;
 
 namespace platform {
 
+// --- capabilities ----------------------------------------------------------
+
+bool supportsExternalProcesses() { return true; }
+bool supportsElevation() { return true; }
+
 // --- identity / privilege --------------------------------------------------
 
 bool isElevated() {

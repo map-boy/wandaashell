@@ -80,6 +80,35 @@ add_custom_command(TARGET wandaashell POST_BUILD
     COMMENT "Staging assets next to the wandaashell binary")
 
 # ---------------------------------------------------------------------------
+# Tier 2: the mobile companion library.
+#
+# This is a SEPARATE product from the desktop shell, not a build variant of it.
+# It is built-ins only - no external process spawning, no elevation - because
+# an app sandbox cannot do either. See docs/TIER2_MOBILE.md.
+#
+# The real iOS and Android builds happen in Xcode and Gradle/NDK, which are not
+# in this repository. This target exists so the shared C++ half compiles and is
+# checked in CI on any machine with a JDK, instead of only breaking when
+# someone opens Android Studio.
+# ---------------------------------------------------------------------------
+option(WANDAASHELL_BUILD_MOBILE_CORE
+       "Build the Tier 2 mobile core as a shared library (needs JNI headers)" OFF)
+
+if(WANDAASHELL_BUILD_MOBILE_CORE)
+    find_package(JNI REQUIRED)
+    add_library(wandaashell_mobile SHARED
+        ${CORE_SOURCES}
+        platform/mobile/platform_mobile_common.cpp
+        platform/mobile/platform_android.cpp
+        apps/mobile/android_bridge.cpp)
+    target_include_directories(wandaashell_mobile
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${JNI_INCLUDE_DIRS})
+    set_target_properties(wandaashell_mobile PROPERTIES OUTPUT_NAME wandaashell)
+    find_package(Threads REQUIRED)
+    target_link_libraries(wandaashell_mobile PRIVATE Threads::Threads)
+endif()
+
+# ---------------------------------------------------------------------------
 # Install (POSIX). assetPath() looks in ../share/wandaashell/assets, so the
 # installed layout resolves the voice clip without any extra configuration.
 # ---------------------------------------------------------------------------

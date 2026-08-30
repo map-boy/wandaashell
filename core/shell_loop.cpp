@@ -82,11 +82,17 @@ static int runSingleStatement(const std::string& line) {
         auto it = builtins.find(s.args[0]);
         if (it != builtins.end()) {
             it->second(s.args, *inStream, *outStream);
-        } else {
+        } else if (platform::supportsExternalProcesses()) {
             platform::spawnProcess(s.args, *inStream, *outStream,
                                    havePrevOutput || s.hasInputRedirect,
                                    isLast ? s.redirectMode : 0,
                                    isLast ? s.redirectFile : "");
+        } else {
+            // Mobile builds: there is no fall-through to an external program,
+            // so say that plainly rather than failing with a spawn error that
+            // implies it was worth trying.
+            std::cerr << "wandaashell: " << s.args[0]
+                      << ": not a built-in command (this build runs built-in commands only)\n";
         }
         if (!isLast) {
             carry.str(nextCarry.str());
