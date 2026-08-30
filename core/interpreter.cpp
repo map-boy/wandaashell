@@ -1,5 +1,5 @@
-#include "interpreter.h"
-#include "shell.h"
+#include "core/interpreter.h"
+#include "core/shell_loop.h"
 #include <iostream>
 #include <stdexcept>
 #include <cmath>

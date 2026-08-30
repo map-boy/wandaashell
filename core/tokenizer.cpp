@@ -1,4 +1,4 @@
-#include "tokenizer.h"
+#include "core/tokenizer.h"
 
 std::vector<std::string> tokenize(const std::string& line) {
     std::vector<std::string> tokens;

@@ -1,6 +1,6 @@
-#include "shell.h"
-#include "script_parser.h"
-#include "interpreter.h"
+#include "core/shell_loop.h"
+#include "core/script_parser.h"
+#include "core/interpreter.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>

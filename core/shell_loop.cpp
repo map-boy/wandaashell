@@ -1,12 +1,10 @@
-#include "shell.h"
-#include "types.h"
-#include "tokenizer.h"
-#include "pipeline.h"
-#include "builtins.h"
-#include "external.h"
-#include "audio.h"
-#include <windows.h>
-#include <shellapi.h>
+#include "core/shell_loop.h"
+#include "core/types.h"
+#include "core/tokenizer.h"
+#include "core/pipeline.h"
+#include "builtins/builtins.h"
+#include "platform/platform.h"
+#include "core/version.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -84,11 +82,17 @@ static int runSingleStatement(const std::string& line) {
         auto it = builtins.find(s.args[0]);
         if (it != builtins.end()) {
             it->second(s.args, *inStream, *outStream);
+        } else if (platform::supportsExternalProcesses()) {
+            platform::spawnProcess(s.args, *inStream, *outStream,
+                                   havePrevOutput || s.hasInputRedirect,
+                                   isLast ? s.redirectMode : 0,
+                                   isLast ? s.redirectFile : "");
         } else {
-            run_external(s.args, *inStream, *outStream,
-                         havePrevOutput || s.hasInputRedirect,
-                         isLast ? s.redirectMode : 0,
-                         isLast ? s.redirectFile : "");
+            // Mobile builds: there is no fall-through to an external program,
+            // so say that plainly rather than failing with a spawn error that
+            // implies it was worth trying.
+            std::cerr << "wandaashell: " << s.args[0]
+                      << ": not a built-in command (this build runs built-in commands only)\n";
         }
         if (!isLast) {
             carry.str(nextCarry.str());
@@ -112,34 +116,25 @@ int runShellLine(const std::string& line) {
     return 0;
 }
 
-static bool isElevated() {
-    BOOL isAdmin = FALSE;
-    PSID adminGroup = NULL;
-    SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
-    if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
-                                  DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)) {
-        CheckTokenMembership(NULL, adminGroup, &isAdmin);
-        FreeSid(adminGroup);
-    }
-    return isAdmin;
-}
-
 void runShell() {
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD mode = 0;
-    GetConsoleMode(hOut, &mode);
-    SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    SetConsoleTitleA("wandaa");
+    const bool colors = platform::enableAnsiColors();
+    platform::setConsoleTitle("wandaa");
     markShellStart();
-    playVoiceAsync();
-    std::cout << "wandaashell v0.4.0\n";
+    platform::playVoiceAsync("wandaa-voice.mp3");
+    std::cout << "wandaashell v" WANDAASHELL_VERSION "\n";
     std::string line;
     while (true) {
-        bool admin = isElevated();
-        std::cout << (admin ? "\x1b[31mwandaa[ADMIN] " : "\x1b[32mwandaa ")
-                   << fs::current_path().string() << " >\x1b[0m ";
+        bool admin = platform::isElevated();
+        if (colors) {
+            std::cout << (admin ? "\x1b[31mwandaa[ADMIN] " : "\x1b[32mwandaa ")
+                      << fs::current_path().string() << " >\x1b[0m ";
+        } else {
+            std::cout << (admin ? "wandaa[ADMIN] " : "wandaa ")
+                      << fs::current_path().string() << " > ";
+        }
         if (!std::getline(std::cin, line)) break;
         int rc = runShellLine(line);
         if (rc == 1) break;
     }
+    platform::shutdownAudio();
 }
