@@ -9,14 +9,12 @@
 
 #include <windows.h>
 #include <shellapi.h>
-#include <mmsystem.h>
 
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -225,24 +223,6 @@ void setConsoleTitle(const std::string& title) {
 
 void clearScreen() {
     std::system("cls");
-}
-
-// --- audio -----------------------------------------------------------------
-
-void playVoiceAsync(const std::string& assetRelativePath) {
-    std::string mp3Path = assetPath(assetRelativePath);
-    if (mp3Path.empty()) return;
-    std::thread([mp3Path]() {
-        mciSendStringA("close wandaavoice", NULL, 0, NULL);
-        std::string openCmd = "open \"" + mp3Path + "\" type mpegvideo alias wandaavoice";
-        if (mciSendStringA(openCmd.c_str(), NULL, 0, NULL) == 0) {
-            mciSendStringA("play wandaavoice", NULL, 0, NULL);
-        }
-    }).detach();
-}
-
-void shutdownAudio() {
-    mciSendStringA("close wandaavoice", NULL, 0, NULL);
 }
 
 } // namespace platform

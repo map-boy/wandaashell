@@ -17,10 +17,16 @@ endif()
 # ---------------------------------------------------------------------------
 file(GLOB CORE_SOURCES CONFIGURE_DEPENDS core/*.cpp builtins/*.cpp)
 
+# Audio is the one part of the platform layer with a single portable
+# implementation, so every platform compiles the same file.
+set(SHARED_PLATFORM_SOURCES platform/audio_miniaudio.cpp)
+
 if(WIN32)
     enable_language(RC)
     set(PLATFORM_SOURCES platform/windows/platform_windows.cpp)
-    set(PLATFORM_LIBS winmm)
+    # miniaudio resolves its Windows audio backends with LoadLibrary, so
+    # nothing extra needs linking here - this is where -lwinmm used to be.
+    set(PLATFORM_LIBS "")
 elseif(APPLE)
     message(FATAL_ERROR
         "The macOS platform backend is not implemented yet (spec phase 4). "
@@ -36,7 +42,8 @@ endif()
 # ---------------------------------------------------------------------------
 # The shell
 # ---------------------------------------------------------------------------
-add_executable(wandaashell apps/desktop_main.cpp ${CORE_SOURCES} ${PLATFORM_SOURCES})
+add_executable(wandaashell apps/desktop_main.cpp ${CORE_SOURCES}
+                           ${SHARED_PLATFORM_SOURCES} ${PLATFORM_SOURCES})
 target_include_directories(wandaashell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(wandaashell PRIVATE ${PLATFORM_LIBS})
 
