@@ -33,6 +33,7 @@ bool ensureEngine() {
     std::lock_guard<std::mutex> lock(g_audioMutex);
     if (g_engineReady) return true;
     if (g_engineFailed) return false;
+    platform::silenceAudioDiagnostics();
     if (ma_engine_init(NULL, &g_engine) != MA_SUCCESS) {
         g_engineFailed = true;
         return false;

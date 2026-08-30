@@ -225,4 +225,10 @@ void clearScreen() {
     std::system("cls");
 }
 
+// --- diagnostics -----------------------------------------------------------
+
+// WASAPI reports failures through return codes and never writes to the
+// terminal, so there is nothing to silence on Windows.
+void silenceAudioDiagnostics() {}
+
 } // namespace platform

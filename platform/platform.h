@@ -130,4 +130,16 @@ void playVoiceAsync(const std::string& assetRelativePath);
 // Release any audio resources held by playVoiceAsync. Called at shutdown.
 void shutdownAudio();
 
+// Install a quiet error handler for the host's audio subsystem, where it has
+// one that writes to the terminal on its own. Called once, before the audio
+// device is opened.
+//
+// This exists because ALSA prints two dozen lines of its own diagnostics to
+// stderr when it probes a machine with no sound card, and that noise is not
+// the shell's to show. It must silence the audio library specifically - the
+// obvious shortcut of redirecting the process's stderr for the duration of
+// device probing also swallows the shell's own error messages, since probing
+// happens on a background thread while the REPL is running.
+void silenceAudioDiagnostics();
+
 } // namespace platform

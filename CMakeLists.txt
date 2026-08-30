@@ -32,9 +32,11 @@ elseif(APPLE)
         "The macOS platform backend is not implemented yet (spec phase 4). "
         "platform/macos/platform_macos.cpp does not exist on this branch.")
 elseif(UNIX)
-    message(FATAL_ERROR
-        "The Linux platform backend is not implemented yet (spec phase 3). "
-        "platform/linux/platform_linux.cpp does not exist on this branch.")
+    set(PLATFORM_SOURCES platform/linux/platform_linux.cpp
+                         platform/posix/platform_posix.cpp)
+    # miniaudio's ALSA/PulseAudio backends are dlopen'd at runtime.
+    find_package(Threads REQUIRED)
+    set(PLATFORM_LIBS Threads::Threads ${CMAKE_DL_LIBS} m)
 else()
     message(FATAL_ERROR "wandaashell has no platform backend for this system.")
 endif()
@@ -68,3 +70,14 @@ add_custom_command(TARGET wandaashell POST_BUILD
             ${CMAKE_CURRENT_SOURCE_DIR}/assets
             $<TARGET_FILE_DIR:wandaashell>/assets
     COMMENT "Staging assets next to the wandaashell binary")
+
+# ---------------------------------------------------------------------------
+# Install (POSIX). assetPath() looks in ../share/wandaashell/assets, so the
+# installed layout resolves the voice clip without any extra configuration.
+# ---------------------------------------------------------------------------
+if(NOT WIN32)
+    include(GNUInstallDirs)
+    install(TARGETS wandaashell RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(FILES assets/wandaa-voice.mp3 assets/wandaa_background.png assets/wandaa_icon.ico
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/wandaashell/assets)
+endif()
