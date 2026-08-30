@@ -118,3 +118,14 @@ if(NOT WIN32)
     install(FILES assets/wandaa-voice.mp3 assets/wandaa_background.png assets/wandaa_icon.ico
             DESTINATION ${CMAKE_INSTALL_DATADIR}/wandaashell/assets)
 endif()
+
+# A Linux desktop entry and hicolor icon, so the shell shows up in application
+# menus with its own icon. macOS has no equivalent for a bare CLI binary - an
+# icon there needs a .app bundle, which this project does not build.
+if(UNIX AND NOT APPLE)
+    install(FILES packaging/wandaashell.desktop
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+    install(FILES assets/wandaa_icon.png
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps
+            RENAME wandaashell.png)
+endif()

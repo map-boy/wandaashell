@@ -20,6 +20,7 @@
 #import <Foundation/Foundation.h>
 
 #include <exception>
+#include <filesystem>
 #include <string>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -74,7 +75,8 @@ NS_ASSUME_NONNULL_BEGIN
     NSArray<NSString *> *documents =
         NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     if (documents.count > 0) {
-        chdir([documents[0] UTF8String]);
+        std::error_code ec;
+        std::filesystem::current_path(std::string([documents[0] UTF8String]), ec);
     }
 
     markShellStart();

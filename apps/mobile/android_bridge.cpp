@@ -35,9 +35,9 @@
 #include "platform/mobile/platform_mobile.h"
 
 #include <jni.h>
-#include <unistd.h>
 
 #include <exception>
+#include <filesystem>
 #include <string>
 
 // Set in platform_android.cpp; populated here because JNI_OnLoad is the only
@@ -100,7 +100,8 @@ Java_com_wandaa_shell_WandaaShell_nativeInit(JNIEnv* env, jclass,
     // that is what `pwd` should report on launch.
     const std::string cwd = toStdString(env, workingDir);
     if (!cwd.empty()) {
-        if (chdir(cwd.c_str()) != 0) { /* stay wherever the process started */ }
+        std::error_code ec;
+        std::filesystem::current_path(cwd, ec);   // on failure, stay put
     }
     markShellStart();
 }

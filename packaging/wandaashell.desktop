@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=wandaashell
+GenericName=Command Shell
+Comment=A custom command-line shell
+Exec=wandaashell
+Icon=wandaashell
+Terminal=true
+Categories=System;TerminalEmulator;Utility;
+Keywords=shell;terminal;command;waa;
