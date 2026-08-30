@@ -1,1 +1,33 @@
-IDI_ICON1 ICON "assets/wandaa_icon.ico"
+// Windows resource script: application icon + version block.
+// Compiled by windres (MinGW) or rc.exe (MSVC); wired up in CMakeLists.txt.
+// Version must be kept in sync with core/version.h and CMakeLists.txt.
+
+1 ICON "wandaa_icon.ico"
+
+1 VERSIONINFO
+FILEVERSION     0,6,0,0
+PRODUCTVERSION  0,6,0,0
+FILEFLAGSMASK   0x3fL
+FILEFLAGS       0x0L
+FILEOS          0x40004L
+FILETYPE        0x1L
+FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "map-boy"
+            VALUE "FileDescription",  "wandaashell - a cross-platform command shell"
+            VALUE "FileVersion",      "0.6.0"
+            VALUE "InternalName",     "wandaashell"
+            VALUE "OriginalFilename", "wandaashell.exe"
+            VALUE "ProductName",      "wandaashell"
+            VALUE "ProductVersion",   "0.6.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

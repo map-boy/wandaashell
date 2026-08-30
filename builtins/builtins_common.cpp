@@ -13,6 +13,7 @@
 #include <utility>
 #include "core/script_parser.h"
 #include "core/interpreter.h"
+#include "core/version.h"
 
 namespace fs = std::filesystem;
 
@@ -263,7 +264,7 @@ static int cmd_alias(const std::vector<std::string>& args, std::istream&, std::o
 }
 
 static int cmd_waa(const std::vector<std::string>& args, std::istream&, std::ostream& out) {
-    if (args.size() > 1 && args[1] == "version") { out << "wandaashell v0.5.0\n"; return 0; }
+    if (args.size() > 1 && args[1] == "version") { out << "wandaashell v" WANDAASHELL_VERSION "\n"; return 0; }
     if (args.size() > 1 && args[1] == "about") {
         out << "wandaashell - a custom C++ shell. github.com/map-boy/wandaashell\n";
         return 0;
@@ -274,7 +275,7 @@ static int cmd_waa(const std::vector<std::string>& args, std::istream&, std::ost
         out << "uptime: " << (secs / 60) << "m " << (secs % 60) << "s\n";
         return 0;
     }
-    out << "wandaashell v0.5.0\n\"waa\" - a small shell with big plans.\nType help to see available commands.\n";
+    out << "wandaashell v" WANDAASHELL_VERSION "\n\"waa\" - a small shell with big plans.\nType help to see available commands.\n";
     return 0;
 }
 

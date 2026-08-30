@@ -4,6 +4,7 @@
 #include "core/pipeline.h"
 #include "builtins/builtins.h"
 #include "platform/platform.h"
+#include "core/version.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -114,7 +115,7 @@ void runShell() {
     platform::setConsoleTitle("wandaa");
     markShellStart();
     platform::playVoiceAsync("wandaa-voice.mp3");
-    std::cout << "wandaashell v0.4.0\n";
+    std::cout << "wandaashell v" WANDAASHELL_VERSION "\n";
     std::string line;
     while (true) {
         bool admin = platform::isElevated();

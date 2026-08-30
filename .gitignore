@@ -1,4 +1,4 @@
-﻿wandaashell.exe
+wandaashell.exe
 *.exe
 *.obj
 *.o
@@ -8,3 +8,31 @@ test.txt
 test2.txt
 
 admin_pass.txt
+
+# Build systems
+build/
+build-*/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+compile_commands.json
+*.res
+*.a
+*.lib
+*.pdb
+*.dSYM/
+
+# Platform binaries and bundles
+wandaashell
+wandaa
+*.app/
+*.dmg
+*.AppImage
+*.apk
+*.aab
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
