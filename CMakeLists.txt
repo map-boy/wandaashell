@@ -28,9 +28,17 @@ if(WIN32)
     # nothing extra needs linking here - this is where -lwinmm used to be.
     set(PLATFORM_LIBS "")
 elseif(APPLE)
-    message(FATAL_ERROR
-        "The macOS platform backend is not implemented yet (spec phase 4). "
-        "platform/macos/platform_macos.cpp does not exist on this branch.")
+    set(PLATFORM_SOURCES platform/macos/platform_macos.cpp
+                         platform/posix/platform_posix.cpp)
+    find_package(Threads REQUIRED)
+    # miniaudio's CoreAudio backend needs these three frameworks.
+    find_library(COREFOUNDATION_LIBRARY CoreFoundation REQUIRED)
+    find_library(COREAUDIO_LIBRARY      CoreAudio      REQUIRED)
+    find_library(AUDIOTOOLBOX_LIBRARY   AudioToolbox   REQUIRED)
+    set(PLATFORM_LIBS Threads::Threads
+                      ${COREFOUNDATION_LIBRARY}
+                      ${COREAUDIO_LIBRARY}
+                      ${AUDIOTOOLBOX_LIBRARY})
 elseif(UNIX)
     set(PLATFORM_SOURCES platform/linux/platform_linux.cpp
                          platform/posix/platform_posix.cpp)
